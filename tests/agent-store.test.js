@@ -79,7 +79,13 @@ test("register stores agent helper capabilities", () => {
       realInputEnabled: false,
       inputHelperAvailable: true,
       stopFileAvailable: true,
-      localPanelPort: 37655
+      localPanelPort: 37655,
+      remoteEngine: {
+        preference: "rustdesk",
+        selected: "rustdesk",
+        sasAvailable: true,
+        rustDesk: { installed: true, localId: "123456789", observedAt: "2026-08-10T21:00:00.000Z", executablePath: "C:\\secret\\RustDesk.exe" }
+      }
     }
   });
 
@@ -98,6 +104,9 @@ test("register stores agent helper capabilities", () => {
   assert.equal(agent.capabilities.realInputEnabled, false);
   assert.equal(agent.capabilities.inputHelperAvailable, true);
   assert.equal(agent.capabilities.localPanelPort, 37655);
+  assert.equal(agent.capabilities.remoteEngine.selected, "rustdesk");
+  assert.equal(agent.capabilities.remoteEngine.rustDesk.localId, "123456789");
+  assert.equal("executablePath" in agent.capabilities.remoteEngine.rustDesk, false);
 });
 
 test("register stores unsigned restricted production capability", () => {

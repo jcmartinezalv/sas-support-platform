@@ -7,7 +7,7 @@ import net from "node:net";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
-import { inspectRemoteEngine, launchHopToDesk } from "./remote-engine-provider.js";
+import { inspectRemoteEngine, launchRemoteEngine, normalizeRemoteEngine, readRemoteEngineIdentity } from "./remote-engine-provider.js";
 import { adaptiveScreenPlan, createAdaptiveScreenState, publicScreenTelemetry, recordScreenCapture } from "./adaptive-screen-controller.js";
 
 const config = {
@@ -86,6 +86,10 @@ let localUnattendedPolicy = readLocalUnattendedPolicy();
 let lastHeartbeatLogAt = 0;
 let lastHeartbeatSessionCount = -1;
 let inputBridgeStatus = { ready: false, privilegedReady: false, mode: null, message: "SAS Input Service todav\u00eda no confirma la sesi\u00f3n interactiva.", processId: null, sessionId: null, checkedAt: null };
+let remoteEngineIdentities = {
+  rustdesk: { localId: null, observedAt: null, error: null },
+  hoptodesk: { localId: null, observedAt: null, error: null }
+};
 
 await ensureAgentCredential();
 if (config.enrollOnly) {
@@ -96,7 +100,9 @@ if (config.enrollOnly) {
 startLocalControlServer();
 startRealtimeProtection();
 await refreshInputBridgeStatus();
+await refreshRemoteEngineIdentities();
 setInterval(() => { refreshInputBridgeStatus().catch(() => {}); }, 5000);
+setInterval(() => { refreshRemoteEngineIdentities().catch(() => {}); }, 60000);
 await register().catch((error) => {
   recordConnectionError(error);
   console.error(`[SAS Agent] initial register failed: ${error.message}`);
@@ -161,6 +167,7 @@ async function recoverConnectionAfterResume(elapsedMs) {
     for (const sessionId of [...webRtcPeers.keys()]) closeWebRtcPeer(sessionId);
     await new Promise((resolve) => setTimeout(resolve, 1200));
     await refreshInputBridgeStatus();
+    await refreshRemoteEngineIdentities();
     await register();
     await pollOnce();
     console.log("[SAS Agent] conexion recuperada despues de reanudar Windows.");
@@ -218,8 +225,11 @@ function startLocalControlServer() {
       if (req.method === "POST" && url.pathname === "/remote-engine/launch") {
         const body = await readLocalJsonBody(req);
         const engine = currentRemoteEngine();
-        if (!engine.hopToDesk.installed) { const error = new Error("HopToDesk no está disponible en este equipo"); error.statusCode = 503; throw error; }
-        return sendLocalJson(res, 202, await launchHopToDesk({ executablePath: engine.hopToDesk.executablePath, mode: body.mode, remoteId: body.remoteId }));
+        const provider = normalizeRemoteEngine(body.provider ?? engine.selected);
+        if (!["rustdesk", "hoptodesk"].includes(provider)) { const error = new Error("No hay un motor remoto externo seleccionado"); error.statusCode = 409; throw error; }
+        const providerStatus = provider === "rustdesk" ? engine.rustDesk : engine.hopToDesk;
+        if (!providerStatus.installed) { const error = new Error(`${provider === "rustdesk" ? "RustDesk" : "HopToDesk"} no está disponible en este equipo`); error.statusCode = 503; throw error; }
+        return sendLocalJson(res, 202, await launchRemoteEngine({ provider, executablePath: providerStatus.executablePath, mode: body.mode, remoteId: body.remoteId }));
       }
       if (req.method === "POST" && url.pathname === "/reconnect") {
         try {
@@ -453,7 +463,32 @@ function buildLocalStatus() {
 }
 
 function currentRemoteEngine() {
-  return inspectRemoteEngine({ preferred: config.remoteEngine, configuredPath: config.hopToDeskPath, configuredRustDeskPath: config.rustDeskPath });
+  const status = inspectRemoteEngine({ preferred: config.remoteEngine, configuredPath: config.hopToDeskPath, configuredRustDeskPath: config.rustDeskPath });
+  return {
+    ...status,
+    rustDesk: { ...status.rustDesk, ...remoteEngineIdentities.rustdesk },
+    hopToDesk: { ...status.hopToDesk, ...remoteEngineIdentities.hoptodesk }
+  };
+}
+
+async function refreshRemoteEngineIdentities() {
+  const status = inspectRemoteEngine({ preferred: config.remoteEngine, configuredPath: config.hopToDeskPath, configuredRustDeskPath: config.rustDeskPath });
+  for (const [provider, engine] of [["rustdesk", status.rustDesk], ["hoptodesk", status.hopToDesk]]) {
+    if (!engine.installed || !engine.executablePath) {
+      remoteEngineIdentities[provider] = { localId: null, observedAt: null, error: null };
+      continue;
+    }
+    try {
+      const identity = await readRemoteEngineIdentity({ provider, executablePath: engine.executablePath });
+      remoteEngineIdentities[provider] = { localId: identity.localId, observedAt: identity.observedAt, error: null };
+    } catch (error) {
+      remoteEngineIdentities[provider] = {
+        ...remoteEngineIdentities[provider],
+        error: String(error?.message ?? error).slice(0, 160)
+      };
+    }
+  }
+  return remoteEngineIdentities;
 }
 
 function localSessionLabel(value) {

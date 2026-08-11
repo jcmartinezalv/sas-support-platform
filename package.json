@@ -1,6 +1,6 @@
 {
   "name": "sas-support-platform",
-  "version": "0.2.148",
+  "version": "0.2.151",
   "description": "Sistema de tickets por WhatsApp, soporte remoto y agente tecnico automatizado.",
   "license": "AGPL-3.0-only",
   "type": "module",

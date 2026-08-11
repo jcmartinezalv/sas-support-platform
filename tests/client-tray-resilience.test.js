@@ -36,7 +36,7 @@ test("el agente invalida solicitudes dormidas y se registra de nuevo al reanudar
   assert.match(agent, /resumeGapMs/);
   assert.match(agent, /recoverConnectionAfterResume/);
   assert.match(agent, /abortActiveServerRequests\("system_resume"\)/);
-  assert.match(agent, /await refreshInputBridgeStatus\(\);\s*await register\(\);/);
+  assert.match(agent, /await refreshInputBridgeStatus\(\);\s*await refreshRemoteEngineIdentities\(\);\s*await register\(\);/);
   assert.match(agent, /statusMatchesActiveSession/);
   assert.match(agent, /native_input_revision_stale/);
   assert.match(agent, /requiredInputHelperRevision/);

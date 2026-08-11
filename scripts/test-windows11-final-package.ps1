@@ -31,7 +31,10 @@ $required = @(
   "downloads\SAS-Cliente-Setup.exe.manifest.json",
   "downloads\SAS-Cliente-Setup.exe.sha256.txt",
   "scripts\install-windows11-final.ps1",
-  "scripts\uninstall-windows11-final.ps1"
+  "scripts\uninstall-windows11-final.ps1",
+  "scripts\install-rustdesk-engine.ps1",
+  "docs\RUSTDESK-INTEGRATION.md",
+  "vendor\remote-engines\rustdesk-1.4.9-x86_64.msi"
 )
 
 $missing = @($required | Where-Object { -not (Test-Path -LiteralPath (Join-Path $package $_) -PathType Leaf) })
@@ -68,6 +71,11 @@ Add-Check "no_private_state" ($forbidden.Count -eq 0) $(if ($forbidden.Count) { 
 $node = Join-Path $package "runtime\node\node.exe"
 $nodeVersion = if (Test-Path -LiteralPath $node) { (& $node --version).Trim() } else { "missing" }
 Add-Check "bundled_node" ($nodeVersion -match '^v(2[4-9]|[3-9][0-9])\.') "versión=$nodeVersion"
+
+$rustDeskInstaller = Join-Path $package "vendor\remote-engines\rustdesk-1.4.9-x86_64.msi"
+$rustDeskExpectedHash = "C87D2F4CEF2A5ACD6003B6507DCFBF5D5168A256DB082CD90B54D35193224AAA"
+$rustDeskActualHash = if (Test-Path -LiteralPath $rustDeskInstaller -PathType Leaf) { (Get-FileHash -LiteralPath $rustDeskInstaller -Algorithm SHA256).Hash } else { "missing" }
+Add-Check "bundled_rustdesk" ($rustDeskActualHash -eq $rustDeskExpectedHash) "version=1.4.9; sha256=$rustDeskActualHash"
 
 $preflightScript = Join-Path $package "scripts\install-windows11-final.ps1"
 $preflightOutput = ""
@@ -117,8 +125,9 @@ $nsisArchivePassed = $false
 $nsisArchiveDetail = "7-Zip no está instalado para validar la estructura NSIS"
 if ($sevenZip -and (Test-Path -LiteralPath $embeddedInstaller -PathType Leaf)) {
   $nsisOutput = & $sevenZip t $embeddedInstaller 2>&1 | Out-String
-  $nsisArchivePassed = $LASTEXITCODE -eq 0 -and $nsisOutput -match "Everything is Ok"
-  $nsisArchiveDetail = if ($nsisArchivePassed) { "estructura NSIS y bloques comprimidos correctos" } else { $nsisOutput.Trim() }
+  $nsisListing = & $sevenZip l $embeddedInstaller 2>&1 | Out-String
+  $nsisArchivePassed = $LASTEXITCODE -eq 0 -and $nsisOutput -match "Everything is Ok" -and $nsisListing -match "rustdesk-1\.4\.9-x86_64\.msi"
+  $nsisArchiveDetail = if ($nsisArchivePassed) { "estructura NSIS y RustDesk integrado correctos" } else { $nsisOutput.Trim() }
 }
 Add-Check "nsis_archive_integrity" $nsisArchivePassed $nsisArchiveDetail
 

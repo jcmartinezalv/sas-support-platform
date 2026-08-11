@@ -1,0 +1,3 @@
+[submodule "vendor/rustdesk"]
+	path = vendor/rustdesk
+	url = https://github.com/jcmartinezalv/rustdesk.git

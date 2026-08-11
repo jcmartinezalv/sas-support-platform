@@ -8,6 +8,11 @@
   [string]$ServerEnvPath = "",
   [string]$NodeExe = "",
   [string]$Publisher = "SAS Support Platform",
+  [ValidateSet("sas", "rustdesk", "hoptodesk", "auto")]
+  [string]$RemoteEngine = "auto",
+  [string]$RustDeskPath = "",
+  [string]$HopToDeskPath = "",
+  [switch]$InstallRustDeskEngine,
   [switch]$UnsignedRestrictedProduction,
   [switch]$UpdateMode
 )
@@ -366,6 +371,15 @@ $installPhase = "compatibilidad"
 $windowsCompatibility = Get-WindowsCompatibility
 Assert-ClientCompatibility -Compatibility $windowsCompatibility
 Assert-Admin
+if ($InstallRustDeskEngine) {
+  $rustDeskInstaller = Join-Path $PSScriptRoot "install-rustdesk-engine.ps1"
+  if (-not (Test-Path -LiteralPath $rustDeskInstaller -PathType Leaf)) { throw "Falta $rustDeskInstaller" }
+  $bundledRustDeskInstaller = Join-Path $InstallPath "vendor\remote-engines\rustdesk-1.4.9-x86_64.msi"
+  if (-not (Test-Path -LiteralPath $bundledRustDeskInstaller -PathType Leaf)) { throw "Falta el MSI integrado de RustDesk: $bundledRustDeskInstaller" }
+  & $rustDeskInstaller -InstallerPath $bundledRustDeskInstaller
+}
+if (-not $RustDeskPath) { $RustDeskPath = Join-Path $env:ProgramFiles "RustDesk\RustDesk.exe" }
+if (-not $HopToDeskPath) { $HopToDeskPath = Join-Path $env:ProgramFiles "HopToDesk\HopToDesk.exe" }
 if (-not $NodeExe) {
   $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
   if ($nodeCommand) { $NodeExe = $nodeCommand.Source }
@@ -386,7 +400,14 @@ if ($UpdateMode -and (Test-Path -LiteralPath $existingClientEnvPath)) {
   if ([Uri]::TryCreate($existingServerUrl, [UriKind]::Absolute, [ref]$existingServerUri) -and $existingServerUri.Scheme -in @("http", "https") -and $existingServerUri.Host -notin @("localhost", "127.0.0.1")) {
     $ServerUrl = $existingServerUri.AbsoluteUri.TrimEnd('/')
   }
+  $existingRemoteEngine = Read-EnvValue $existingClientEnvPath "SAS_REMOTE_ENGINE"
+  if ($existingRemoteEngine -in @("sas", "rustdesk", "hoptodesk", "auto")) { $RemoteEngine = $existingRemoteEngine }
+  $existingRustDeskPath = Read-EnvValue $existingClientEnvPath "SAS_RUSTDESK_PATH"
+  if ($existingRustDeskPath) { $RustDeskPath = $existingRustDeskPath }
+  $existingHopToDeskPath = Read-EnvValue $existingClientEnvPath "SAS_HOPTODESK_PATH"
+  if ($existingHopToDeskPath) { $HopToDeskPath = $existingHopToDeskPath }
 }
+if ($InstallRustDeskEngine) { $RemoteEngine = "auto" }
 
 if (-not $ServerEnvPath) {
   $ServerEnvPath = Join-Path (Resolve-Path "$PSScriptRoot\..").Path ".env.production"
@@ -515,6 +536,9 @@ SAS_ENABLE_REAL_INPUT=true
 SAS_PRIVILEGED_BROKER_PIPE=\\.\pipe\SASPrivilegedDesktop
 SAS_PRIVILEGED_BROKER_PATH=$secureAttentionBrokerPath
 SAS_UNSIGNED_RESTRICTED_PRODUCTION=$unsignedRestrictedEnv
+SAS_REMOTE_ENGINE=$RemoteEngine
+SAS_RUSTDESK_PATH=$RustDeskPath
+SAS_HOPTODESK_PATH=$HopToDeskPath
 SAS_AGENT_PRODUCT_NAME=SAS Support Client Agent
 SAS_AGENT_PUBLISHER=$Publisher
 "@ | Set-Content -Path "$InstallPath\.env.client" -Encoding UTF8
