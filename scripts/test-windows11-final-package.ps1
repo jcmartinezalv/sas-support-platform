@@ -31,7 +31,9 @@ $required = @(
   "downloads\SAS-Cliente-Setup.exe.manifest.json",
   "downloads\SAS-Cliente-Setup.exe.sha256.txt",
   "scripts\install-windows11-final.ps1",
-  "scripts\uninstall-windows11-final.ps1"
+  "scripts\uninstall-windows11-final.ps1",
+  "scripts\install-rustdesk-engine.ps1",
+  "docs\RUSTDESK-INTEGRATION.md"
 )
 
 $missing = @($required | Where-Object { -not (Test-Path -LiteralPath (Join-Path $package $_) -PathType Leaf) })

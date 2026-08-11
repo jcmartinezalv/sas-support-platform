@@ -4,6 +4,7 @@ import fs from "node:fs";
 
 const script = fs.readFileSync("scripts/install-rustdesk-engine.ps1", "utf8");
 const clientInstaller = fs.readFileSync("scripts/install-client.ps1", "utf8");
+const packageValidator = fs.readFileSync("scripts/test-windows11-final-package.ps1", "utf8");
 
 test("RustDesk installer pins the release and verifies its official digest", () => {
   assert.match(script, /\[string\]\$Version = "1\.4\.9"/);
@@ -26,4 +27,9 @@ test("SAS client installer can install and persist the selected external engine"
   assert.match(clientInstaller, /SAS_REMOTE_ENGINE=\$RemoteEngine/);
   assert.match(clientInstaller, /SAS_RUSTDESK_PATH=\$RustDeskPath/);
   assert.match(clientInstaller, /SAS_HOPTODESK_PATH=\$HopToDeskPath/);
+});
+
+test("final package validation requires the RustDesk integration files", () => {
+  assert.match(packageValidator, /scripts\\install-rustdesk-engine\.ps1/);
+  assert.match(packageValidator, /docs\\RUSTDESK-INTEGRATION\.md/);
 });
