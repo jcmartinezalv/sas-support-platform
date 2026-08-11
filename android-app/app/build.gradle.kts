@@ -11,8 +11,8 @@ android {
         applicationId = "mx.setinfo.fisher"
         minSdk = 26
         targetSdk = 37
-        versionCode = 99
-        versionName = "0.2.150"
+        versionCode = 100
+        versionName = "0.2.151"
     }
 
     buildFeatures { compose = true }

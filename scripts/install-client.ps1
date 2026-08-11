@@ -374,7 +374,9 @@ Assert-Admin
 if ($InstallRustDeskEngine) {
   $rustDeskInstaller = Join-Path $PSScriptRoot "install-rustdesk-engine.ps1"
   if (-not (Test-Path -LiteralPath $rustDeskInstaller -PathType Leaf)) { throw "Falta $rustDeskInstaller" }
-  & $rustDeskInstaller
+  $bundledRustDeskInstaller = Join-Path $InstallPath "vendor\remote-engines\rustdesk-1.4.9-x86_64.msi"
+  if (-not (Test-Path -LiteralPath $bundledRustDeskInstaller -PathType Leaf)) { throw "Falta el MSI integrado de RustDesk: $bundledRustDeskInstaller" }
+  & $rustDeskInstaller -InstallerPath $bundledRustDeskInstaller
 }
 if (-not $RustDeskPath) { $RustDeskPath = Join-Path $env:ProgramFiles "RustDesk\RustDesk.exe" }
 if (-not $HopToDeskPath) { $HopToDeskPath = Join-Path $env:ProgramFiles "HopToDesk\HopToDesk.exe" }
@@ -405,6 +407,7 @@ if ($UpdateMode -and (Test-Path -LiteralPath $existingClientEnvPath)) {
   $existingHopToDeskPath = Read-EnvValue $existingClientEnvPath "SAS_HOPTODESK_PATH"
   if ($existingHopToDeskPath) { $HopToDeskPath = $existingHopToDeskPath }
 }
+if ($InstallRustDeskEngine) { $RemoteEngine = "auto" }
 
 if (-not $ServerEnvPath) {
   $ServerEnvPath = Join-Path (Resolve-Path "$PSScriptRoot\..").Path ".env.production"

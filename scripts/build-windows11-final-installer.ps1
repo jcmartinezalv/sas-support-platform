@@ -2,7 +2,9 @@ param(
   [string]$OutputRoot = "dist",
   [string]$PackageName = "sas-windows11-final",
   [string]$NodeVersion = "24.18.0",
-  [string]$NodeArchivePath = ""
+  [string]$NodeArchivePath = "",
+  [string]$RustDeskVersion = "1.4.9",
+  [string]$RustDeskInstallerPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -80,6 +82,22 @@ New-Item -ItemType Directory -Force -Path $runtimeRoot | Out-Null
 Copy-Item (Join-Path $expanded.FullName "node.exe") (Join-Path $runtimeRoot "node.exe") -Force
 Copy-Item (Join-Path $expanded.FullName "LICENSE") (Join-Path $runtimeRoot "LICENSE-NODE.txt") -Force
 Remove-Item -LiteralPath $stagingRoot -Recurse -Force
+
+$rustDeskExpectedHash = "C87D2F4CEF2A5ACD6003B6507DCFBF5D5168A256DB082CD90B54D35193224AAA"
+$rustDeskFile = "rustdesk-$RustDeskVersion-x86_64.msi"
+$rustDeskUrl = "https://github.com/rustdesk/rustdesk/releases/download/$RustDeskVersion/$rustDeskFile"
+if (-not $RustDeskInstallerPath) {
+  $rustDeskCache = Join-Path $root "tools\cache\rustdesk"
+  New-Item -ItemType Directory -Force -Path $rustDeskCache | Out-Null
+  $RustDeskInstallerPath = Join-Path $rustDeskCache $rustDeskFile
+  if (-not (Test-Path -LiteralPath $RustDeskInstallerPath -PathType Leaf)) { Invoke-VerifiedDownload -Uri $rustDeskUrl -OutFile $RustDeskInstallerPath | Out-Null }
+}
+$RustDeskInstallerPath = (Resolve-Path -LiteralPath $RustDeskInstallerPath).Path
+$rustDeskActualHash = (Get-FileHash -LiteralPath $RustDeskInstallerPath -Algorithm SHA256).Hash.ToUpperInvariant()
+if ($rustDeskActualHash -ne $rustDeskExpectedHash) { throw "El MSI de RustDesk $RustDeskVersion no coincide con el SHA-256 oficial fijado." }
+$remoteEngineRoot = Join-Path $outDir "vendor\remote-engines"
+New-Item -ItemType Directory -Force -Path $remoteEngineRoot | Out-Null
+Copy-Item -LiteralPath $RustDeskInstallerPath -Destination (Join-Path $remoteEngineRoot $rustDeskFile) -Force
 
 # Componentes nativos requeridos por SAS Cliente. ClamAV viaja sin firmas; freshclam las descarga despues.
 $clientToolsRoot = Join-Path $outDir "tools"
@@ -177,6 +195,7 @@ $manifest = [pscustomobject]@{
   generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
   installer = @{ launcher = "INSTALAR-SAS.cmd"; uninstaller = "DESINSTALAR-SAS.cmd"; requiresAdministrator = $true; signed = $false }
   nodeRuntime = @{ version = $NodeVersion; executable = "runtime\node\node.exe"; archiveSha256 = $actualHash; source = $nodeUrl }
+  rustDesk = @{ version = $RustDeskVersion; installer = "vendor\remote-engines\$rustDeskFile"; installerSha256 = $rustDeskActualHash; source = $rustDeskUrl; automaticInstall = $true }
   includesWinAcme = Test-Path (Join-Path $outDir "tools\win-acme\wacs.exe")
   fileCount = @($files).Count
   files = $files
@@ -204,4 +223,3 @@ $buildResult = [pscustomobject]@{
 [void]$buildMutex.ReleaseMutex()
 $buildMutex.Dispose()
 $buildResult | ConvertTo-Json -Depth 5
-

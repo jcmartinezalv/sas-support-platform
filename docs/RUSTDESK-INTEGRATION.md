@@ -13,7 +13,9 @@ La primera etapa usa RustDesk como proceso AGPL separado y administrado por SAS.
 - Revisión: `6c578292e8ebbbec708b76986ba8c4bc7c509747`
 - Licencia: GNU AGPL versión 3
 
-## Configuración del cliente SAS
+## Instalación y configuración del cliente SAS
+
+Desde SAS 0.2.151, el instalador de SAS Cliente incluye el MSI oficial de RustDesk 1.4.9 y valida su SHA-256 antes de ejecutarlo silenciosamente. Esto se aplica tanto a instalaciones nuevas como a actualizaciones. Si RustDesk ya está instalado, se conserva sin reinstalarlo.
 
 ```dotenv
 SAS_REMOTE_ENGINE=rustdesk
@@ -34,6 +36,8 @@ El estado se consulta en `GET http://127.0.0.1:37655/remote-engine/status`. El i
 
 `mode` acepta `desktop` y `files`. SAS genera únicamente `--connect <id>` o `--file-transfer <id>`. Las contraseñas quedan prohibidas en argumentos para impedir que aparezcan en la lista de procesos de Windows.
 
+El cliente obtiene su ID mediante `--get-id`, lo reporta al servidor sin rutas locales ni secretos y el espacio de soporte muestra **Abrir en RustDesk**. El enlace se abre en el equipo del técnico, no en el equipo atendido.
+
 ## Límite de seguridad
 
-El arranque del proveedor no sustituye el consentimiento de SAS. La autorización, el alcance, la vinculación con el ticket y el cierre de la sesión continúan gobernados por SAS. En la siguiente etapa el ID del proveedor se asociará al equipo y el lanzamiento sólo podrá originarse desde una sesión remota autorizada.
+El arranque del proveedor no sustituye el consentimiento de SAS. La autorización, el alcance, la vinculación con el ticket y el cierre de la sesión continúan gobernados por SAS.

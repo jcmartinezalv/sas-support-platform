@@ -2,6 +2,7 @@ param(
   [string]$Version = "1.4.9",
   [string]$ExpectedSha256 = "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa",
   [string]$DownloadUrl = "",
+  [string]$InstallerPath = "",
   [string]$ExpectedExecutable = "",
   [switch]$Force
 )
@@ -37,17 +38,26 @@ if ((Test-Path -LiteralPath $ExpectedExecutable -PathType Leaf) -and -not $Force
   exit 0
 }
 
-$temporaryRoot = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ("sas-rustdesk-" + [Guid]::NewGuid().ToString("N"))))
-$systemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
-if (-not $temporaryRoot.StartsWith($systemTemp, [StringComparison]::OrdinalIgnoreCase)) {
-  throw "La ruta temporal calculada no pertenece al directorio temporal de Windows."
+$temporaryRoot = $null
+$msiPath = $null
+$installerSource = $DownloadUrl
+if ($InstallerPath) {
+  if (-not (Test-Path -LiteralPath $InstallerPath -PathType Leaf)) { throw "No existe el MSI integrado de RustDesk: $InstallerPath" }
+  $msiPath = (Resolve-Path -LiteralPath $InstallerPath).Path
+  if ([IO.Path]::GetExtension($msiPath) -ne ".msi") { throw "El instalador integrado de RustDesk debe ser un archivo MSI." }
+  $installerSource = "bundled_verified_msi"
+} else {
+  $temporaryRoot = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ("sas-rustdesk-" + [Guid]::NewGuid().ToString("N"))))
+  $systemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+  if (-not $temporaryRoot.StartsWith($systemTemp, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "La ruta temporal calculada no pertenece al directorio temporal de Windows."
+  }
+  New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
+  $msiPath = Join-Path $temporaryRoot "rustdesk-$Version-x86_64.msi"
 }
 
-New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
-$msiPath = Join-Path $temporaryRoot "rustdesk-$Version-x86_64.msi"
-
 try {
-  Invoke-WebRequest -Uri $DownloadUrl -OutFile $msiPath -UseBasicParsing
+  if (-not $InstallerPath) { Invoke-WebRequest -Uri $DownloadUrl -OutFile $msiPath -UseBasicParsing }
   $actualSha256 = (Get-FileHash -LiteralPath $msiPath -Algorithm SHA256).Hash.ToLowerInvariant()
   if ($actualSha256 -ne $ExpectedSha256.ToLowerInvariant()) {
     throw "El instalador RustDesk no coincide con el SHA-256 publicado. Esperado: $ExpectedSha256; recibido: $actualSha256"
@@ -70,10 +80,10 @@ try {
     version = $Version
     executablePath = $ExpectedExecutable
     sha256 = $actualSha256
-    source = $DownloadUrl
+    source = $installerSource
   } | ConvertTo-Json -Depth 4
 } finally {
-  if (Test-Path -LiteralPath $temporaryRoot) {
+  if ($temporaryRoot -and (Test-Path -LiteralPath $temporaryRoot)) {
     Remove-Item -LiteralPath $temporaryRoot -Recurse -Force
   }
 }

@@ -21,6 +21,7 @@ SetCompressorDictSize 64
 !ifndef PublicBaseUrl
   !define PublicBaseUrl "https://setinfo.sytes.net"
 !endif
+!define RustDeskVersion "1.4.9"
 Name "SAS Cliente"
 OutFile "${OutputDir}\SAS-Cliente-Setup-${AppVersion}.exe"
 InstallDir "C:\SAS\Client"
@@ -129,6 +130,8 @@ Section "SAS Cliente" SEC_MAIN
   File /r "${SourceRoot}\scripts"
   File /r "${SourceRoot}\docs"
   File /r "${SourceRoot}\runtime"
+  SetOutPath "$INSTDIR\vendor\remote-engines"
+  File "${SourceRoot}\vendor\remote-engines\rustdesk-${RustDeskVersion}-x86_64.msi"
   SetOutPath "$INSTDIR\tools"
   ; El motor viaja integrado, pero las firmas se descargan despues de instalar.
   File /r /x "database" /x "*.cvd" /x "*.cld" /x "*.sign" /x "freshclam.dat" "${SourceRoot}\tools\clamav"
@@ -147,7 +150,7 @@ Section "SAS Cliente" SEC_MAIN
   WriteUninstaller "$INSTDIR\Desinstalar-SAS-Cliente.exe"
   DetailPrint "Instalando o actualizando SAS Cliente y su motor ClamAV integrado..."
   ${If} $IsUpdate == "1"
-    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\scripts\install-client.ps1" -InstallPath "$INSTDIR" -ServerUrl "${PublicBaseUrl}" -NodeExe "$INSTDIR\runtime\node\node.exe" -UpdateMode' $1
+    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\scripts\install-client.ps1" -InstallPath "$INSTDIR" -ServerUrl "${PublicBaseUrl}" -NodeExe "$INSTDIR\runtime\node\node.exe" -RemoteEngine auto -InstallRustDeskEngine -UpdateMode' $1
     ${If} $1 != 0
 ClearErrors
       FileOpen $0 "$APPDATA\SAS\Client\last-install-error.txt" r
@@ -162,7 +165,7 @@ ClearErrors
       Abort
     ${EndIf}
   ${Else}
-    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\scripts\install-client.ps1" -InstallPath "$INSTDIR" -ServerUrl "${PublicBaseUrl}" -NodeExe "$INSTDIR\runtime\node\node.exe" -EnrollmentToken "$EnrollmentToken" -DeploymentToken "$DeploymentToken" -DeploymentFile "$DeploymentFile"' $1
+    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\scripts\install-client.ps1" -InstallPath "$INSTDIR" -ServerUrl "${PublicBaseUrl}" -NodeExe "$INSTDIR\runtime\node\node.exe" -RemoteEngine auto -InstallRustDeskEngine -EnrollmentToken "$EnrollmentToken" -DeploymentToken "$DeploymentToken" -DeploymentFile "$DeploymentFile"' $1
     ${If} $1 != 0
       MessageBox MB_ICONSTOP "No fue posible instalar o vincular SAS Cliente. Verifica que la liga siga vigente. Codigo $1."
       Abort

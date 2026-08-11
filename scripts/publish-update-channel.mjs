@@ -38,7 +38,7 @@ function validatePackage(zipPath, expectedVersion) {
     "package.json", "src/server.js", "src/agents/agent-store.js", "src/contacts/contact-store.js", "src/agent/image-analysis-service.js", "src/mobile/technician-notification-service.js", "src/remote/remote-session-store.js",
     "client/agent-client.js", "client/adaptive-screen-controller.js", "client/webrtc-runtime/package.json", "client/webrtc-runtime/node_modules/node-datachannel/build/Release/node_datachannel.node", "public/app.js", "public/remote-workspace.html",
     "scripts/update-server-deployment.ps1", "scripts/install-sas-services.ps1", "scripts/install-sas-turn-service.ps1", "scripts/stop-client-components.ps1", "scripts/apply-client-update.ps1", "scripts/show-client-update-progress.ps1", "src/remote/turn-credentials.js", "src/turn/turn-service.js",
-    "tools/sas-service-host/SasServiceHost.exe", "tools/sas-dxgi-capture/bin/Release/SasDxgiCapture.exe", "tools/sas-admin-console/SasAdminConsole.exe", "tools/coturn/turnserver.exe", "downloads/SAS-Cliente-Setup.exe", "downloads/SAS-Cliente-Setup.exe.manifest.json", "downloads/SAS-Cliente-Setup.exe.sha256.txt"
+    "tools/sas-service-host/SasServiceHost.exe", "tools/sas-dxgi-capture/bin/Release/SasDxgiCapture.exe", "tools/sas-admin-console/SasAdminConsole.exe", "tools/coturn/turnserver.exe", "vendor/remote-engines/rustdesk-1.4.9-x86_64.msi", "downloads/SAS-Cliente-Setup.exe", "downloads/SAS-Cliente-Setup.exe.manifest.json", "downloads/SAS-Cliente-Setup.exe.sha256.txt"
   ];
   const missing = required.filter(file => !entries.includes(file));
   if (missing.length) throw new Error(`Paquete inválido: faltan ${missing.join(", ")}`);
