@@ -280,6 +280,26 @@ function hashSecret(value) {
 function normalizeDeployment(value = {}) {
   const deployment = value && typeof value === "object" ? value : {};
   return { campaignId: cleanText(deployment.campaignId) || null, campaignName: cleanText(deployment.campaignName) || null, company: cleanText(deployment.company) || null, enrolledAt: deployment.enrolledAt ?? null, associationStatus: cleanText(deployment.associationStatus) || (deployment.campaignId ? "pending_user" : null) };
+}function normalizeRemoteEngineCapability(input = {}) {
+  const engine = input && typeof input === "object" ? input : {};
+  const normalizeProvider = (value = {}) => {
+    const provider = value && typeof value === "object" ? value : {};
+    const localId = cleanText(provider.localId);
+    return {
+      installed: Boolean(provider.installed),
+      localId: /^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$/.test(localId) ? localId : null,
+      observedAt: cleanText(provider.observedAt) || null,
+      pinnedVersion: cleanText(provider.pinnedVersion) || null,
+      error: cleanText(provider.error).slice(0, 160) || null
+    };
+  };
+  return {
+    preference: ["sas", "rustdesk", "hoptodesk", "auto"].includes(cleanText(engine.preference)) ? cleanText(engine.preference) : "sas",
+    selected: ["sas", "rustdesk", "hoptodesk", "unavailable"].includes(cleanText(engine.selected)) ? cleanText(engine.selected) : "sas",
+    sasAvailable: engine.sasAvailable !== false,
+    rustDesk: normalizeProvider(engine.rustDesk),
+    hopToDesk: normalizeProvider(engine.hopToDesk)
+  };
 }function normalizeCapabilities(input = {}) {
   const capabilities = input && typeof input === "object" ? input : {};
   return {
@@ -306,7 +326,8 @@ function normalizeDeployment(value = {}) {
     unsignedRestrictedProduction: Boolean(capabilities.unsignedRestrictedProduction),
     softwareInventory: Boolean(capabilities.softwareInventory),
     securityEngine: cleanText(capabilities.securityEngine) || null,
-    localPanelPort: Number.isFinite(Number(capabilities.localPanelPort)) ? Number(capabilities.localPanelPort) : null
+    localPanelPort: Number.isFinite(Number(capabilities.localPanelPort)) ? Number(capabilities.localPanelPort) : null,
+    remoteEngine: normalizeRemoteEngineCapability(capabilities.remoteEngine)
   };
 }
 function withFreshStatus(agent, staleAfterMs) {
@@ -322,5 +343,4 @@ function withFreshStatus(agent, staleAfterMs) {
 function cleanText(value) {
   return String(value ?? "").trim();
 }
-
 

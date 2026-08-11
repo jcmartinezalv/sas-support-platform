@@ -88,3 +88,11 @@ test("workspace exposes a copyable end-to-end input diagnostic", () => {
     assert.ok(workspace.includes(marker), marker);
   }
 });
+
+test("workspace opens the controlled device ID in the technician's RustDesk", () => {
+  assert.match(workspace, /id="externalRemoteButton"/);
+  assert.match(workspace, /remoteAgent\?\.capabilities\?\.remoteEngine/);
+  assert.match(workspace, /window\.location\.href=target\.provider\+'(?:\\:\/\/|:\/\/)'\+encodeURIComponent\(target\.localId\)/);
+  assert.match(workspace, /Abrir en '\+target\.label/);
+  assert.doesNotMatch(workspace, /rustdesk[^\n]{0,80}password/i);
+});

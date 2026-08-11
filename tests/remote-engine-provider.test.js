@@ -7,7 +7,8 @@ import {
   findHopToDeskExecutable,
   findRustDeskExecutable,
   inspectRemoteEngine,
-  normalizeRemoteEngine
+  normalizeRemoteEngine,
+  readRemoteEngineIdentity
 } from "../client/remote-engine-provider.js";
 
 test("remote engine defaults safely to SAS", () => {
@@ -77,4 +78,18 @@ test("launcher rejects invalid providers, IDs, modes and passwords in arguments"
   assert.throws(() => buildRustDeskLaunch({ executablePath, remoteId: "123", mode: "shell", exists: () => true }), /función solicitada/);
   const launch = buildRustDeskLaunch({ executablePath, remoteId: "123456789", exists: () => true });
   assert.equal(launch.args.includes("--password"), false);
+});
+
+test("remote engine identity uses upstream get-id without exposing credentials", async () => {
+  const calls = [];
+  const identity = await readRemoteEngineIdentity({
+    provider: "rustdesk",
+    executablePath: "C:\\RustDesk\\RustDesk.exe",
+    exists: () => true,
+    run: async (...args) => { calls.push(args); return { stdout: "123456789\r\n" }; }
+  });
+  assert.equal(identity.localId, "123456789");
+  assert.deepEqual(calls[0][1], ["--get-id"]);
+  assert.equal(calls[0][1].includes("--password"), false);
+  await assert.rejects(() => readRemoteEngineIdentity({ provider: "rustdesk", executablePath: "C:\\RustDesk\\RustDesk.exe", exists: () => true, run: async () => ({ stdout: "not/an/id" }) }), /ID local válido/);
 });

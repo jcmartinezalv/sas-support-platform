@@ -7,7 +7,7 @@ import net from "node:net";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
-import { inspectRemoteEngine, launchRemoteEngine, normalizeRemoteEngine } from "./remote-engine-provider.js";
+import { inspectRemoteEngine, launchRemoteEngine, normalizeRemoteEngine, readRemoteEngineIdentity } from "./remote-engine-provider.js";
 import { adaptiveScreenPlan, createAdaptiveScreenState, publicScreenTelemetry, recordScreenCapture } from "./adaptive-screen-controller.js";
 
 const config = {
@@ -86,6 +86,10 @@ let localUnattendedPolicy = readLocalUnattendedPolicy();
 let lastHeartbeatLogAt = 0;
 let lastHeartbeatSessionCount = -1;
 let inputBridgeStatus = { ready: false, privilegedReady: false, mode: null, message: "SAS Input Service todav\u00eda no confirma la sesi\u00f3n interactiva.", processId: null, sessionId: null, checkedAt: null };
+let remoteEngineIdentities = {
+  rustdesk: { localId: null, observedAt: null, error: null },
+  hoptodesk: { localId: null, observedAt: null, error: null }
+};
 
 await ensureAgentCredential();
 if (config.enrollOnly) {
@@ -96,7 +100,9 @@ if (config.enrollOnly) {
 startLocalControlServer();
 startRealtimeProtection();
 await refreshInputBridgeStatus();
+await refreshRemoteEngineIdentities();
 setInterval(() => { refreshInputBridgeStatus().catch(() => {}); }, 5000);
+setInterval(() => { refreshRemoteEngineIdentities().catch(() => {}); }, 60000);
 await register().catch((error) => {
   recordConnectionError(error);
   console.error(`[SAS Agent] initial register failed: ${error.message}`);
@@ -161,6 +167,7 @@ async function recoverConnectionAfterResume(elapsedMs) {
     for (const sessionId of [...webRtcPeers.keys()]) closeWebRtcPeer(sessionId);
     await new Promise((resolve) => setTimeout(resolve, 1200));
     await refreshInputBridgeStatus();
+    await refreshRemoteEngineIdentities();
     await register();
     await pollOnce();
     console.log("[SAS Agent] conexion recuperada despues de reanudar Windows.");
@@ -456,7 +463,32 @@ function buildLocalStatus() {
 }
 
 function currentRemoteEngine() {
-  return inspectRemoteEngine({ preferred: config.remoteEngine, configuredPath: config.hopToDeskPath, configuredRustDeskPath: config.rustDeskPath });
+  const status = inspectRemoteEngine({ preferred: config.remoteEngine, configuredPath: config.hopToDeskPath, configuredRustDeskPath: config.rustDeskPath });
+  return {
+    ...status,
+    rustDesk: { ...status.rustDesk, ...remoteEngineIdentities.rustdesk },
+    hopToDesk: { ...status.hopToDesk, ...remoteEngineIdentities.hoptodesk }
+  };
+}
+
+async function refreshRemoteEngineIdentities() {
+  const status = inspectRemoteEngine({ preferred: config.remoteEngine, configuredPath: config.hopToDeskPath, configuredRustDeskPath: config.rustDeskPath });
+  for (const [provider, engine] of [["rustdesk", status.rustDesk], ["hoptodesk", status.hopToDesk]]) {
+    if (!engine.installed || !engine.executablePath) {
+      remoteEngineIdentities[provider] = { localId: null, observedAt: null, error: null };
+      continue;
+    }
+    try {
+      const identity = await readRemoteEngineIdentity({ provider, executablePath: engine.executablePath });
+      remoteEngineIdentities[provider] = { localId: identity.localId, observedAt: identity.observedAt, error: null };
+    } catch (error) {
+      remoteEngineIdentities[provider] = {
+        ...remoteEngineIdentities[provider],
+        error: String(error?.message ?? error).slice(0, 160)
+      };
+    }
+  }
+  return remoteEngineIdentities;
 }
 
 function localSessionLabel(value) {

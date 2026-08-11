@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const REMOTE_CAPABILITIES = Object.freeze({
   screen: true,
@@ -119,6 +122,25 @@ export function launchHopToDesk(options = {}) {
 
 export function launchRustDesk(options = {}) {
   return launchRemoteEngine({ ...options, provider: "rustdesk" });
+}
+
+export async function readRemoteEngineIdentity({ provider, executablePath, exists = fs.existsSync, run = execFileAsync } = {}) {
+  const normalizedProvider = String(provider ?? "").trim().toLowerCase();
+  if (!EXTERNAL_PROVIDERS.has(normalizedProvider)) throw statusError(400, "El proveedor remoto no es válido");
+  if (!executablePath || !exists(executablePath)) throw statusError(503, `${providerLabel(normalizedProvider)} no está instalado o su ruta no es válida`);
+
+  const result = await run(executablePath, ["--get-id"], {
+    windowsHide: true,
+    timeout: 7000,
+    maxBuffer: 64 * 1024
+  });
+  const localId = String(result?.stdout ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => /^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$/.test(line));
+  if (!localId) throw statusError(503, `${providerLabel(normalizedProvider)} no devolvió un ID local válido`);
+
+  return { provider: normalizedProvider, localId, observedAt: new Date().toISOString() };
 }
 
 function firstExistingPath(candidates, exists) {
