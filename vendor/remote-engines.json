@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "engines": [
+    {
+      "name": "RustDesk",
+      "role": "preferred_remote_engine",
+      "repository": "https://github.com/rustdesk/rustdesk",
+      "fork": "https://github.com/jcmartinezalv/rustdesk",
+      "sourcePath": "vendor/rustdesk",
+      "version": "1.4.9",
+      "revision": "6c578292e8ebbbec708b76986ba8c4bc7c509747",
+      "license": "AGPL-3.0",
+      "integration": "isolated_external_provider"
+    },
+    {
+      "name": "HopToDesk",
+      "role": "compatible_remote_engine",
+      "repository": "https://gitlab.com/hoptodesk/hoptodesk",
+      "version": "1.45.9",
+      "revision": "ada3877c60c169b4777715cc6f7a35d44a34f4cb",
+      "license": "AGPL-3.0",
+      "integration": "isolated_external_provider"
+    }
+  ]
+}

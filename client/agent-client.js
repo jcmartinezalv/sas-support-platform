@@ -7,7 +7,7 @@ import net from "node:net";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
-import { inspectRemoteEngine, launchHopToDesk } from "./remote-engine-provider.js";
+import { inspectRemoteEngine, launchRemoteEngine, normalizeRemoteEngine } from "./remote-engine-provider.js";
 import { adaptiveScreenPlan, createAdaptiveScreenState, publicScreenTelemetry, recordScreenCapture } from "./adaptive-screen-controller.js";
 
 const config = {
@@ -218,8 +218,11 @@ function startLocalControlServer() {
       if (req.method === "POST" && url.pathname === "/remote-engine/launch") {
         const body = await readLocalJsonBody(req);
         const engine = currentRemoteEngine();
-        if (!engine.hopToDesk.installed) { const error = new Error("HopToDesk no está disponible en este equipo"); error.statusCode = 503; throw error; }
-        return sendLocalJson(res, 202, await launchHopToDesk({ executablePath: engine.hopToDesk.executablePath, mode: body.mode, remoteId: body.remoteId }));
+        const provider = normalizeRemoteEngine(body.provider ?? engine.selected);
+        if (!["rustdesk", "hoptodesk"].includes(provider)) { const error = new Error("No hay un motor remoto externo seleccionado"); error.statusCode = 409; throw error; }
+        const providerStatus = provider === "rustdesk" ? engine.rustDesk : engine.hopToDesk;
+        if (!providerStatus.installed) { const error = new Error(`${provider === "rustdesk" ? "RustDesk" : "HopToDesk"} no está disponible en este equipo`); error.statusCode = 503; throw error; }
+        return sendLocalJson(res, 202, await launchRemoteEngine({ provider, executablePath: providerStatus.executablePath, mode: body.mode, remoteId: body.remoteId }));
       }
       if (req.method === "POST" && url.pathname === "/reconnect") {
         try {
