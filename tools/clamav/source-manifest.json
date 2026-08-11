@@ -1,0 +1,12 @@
+{
+    "product":  "ClamAV",
+    "version":  "1.5.3",
+    "architecture":  "x64",
+    "sourceUrl":  "https://www.clamav.net/downloads/production/clamav-1.5.3.win.x64.zip",
+    "archiveSha256":  "E998B3B98C2812726CA7F4DB06BF89C4B52A7EB7160AB93403C3EC790A9BE6B6",
+    "detachedSignature":  "clamav-1.5.3.win.x64.zip.sig",
+    "pgpVerified":  true,
+    "signingKeyFingerprint":  "5BADCA2665EF59DCF8A23D8B707F0DB480836771",
+    "assembledAtUtc":  "2026-07-22T21:35:28.4877831Z",
+    "runtimePolicy":  "Motor portátil integrado; sin instalación externa; sin eliminación automática."
+}

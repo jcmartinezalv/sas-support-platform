@@ -1,0 +1,2 @@
+﻿param([string]$OutputPath=(Join-Path $PSScriptRoot 'SasServiceHost.exe'))
+$ErrorActionPreference='Stop'; $candidates=@("$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe","$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"); $csc=$candidates|?{Test-Path $_}|select -First 1; if(!$csc){throw 'csc.exe no encontrado'}; & $csc /nologo /target:exe /out:$OutputPath /reference:System.ServiceProcess.dll (Join-Path $PSScriptRoot 'SasServiceHost.cs'); if($LASTEXITCODE){throw "csc fallo $LASTEXITCODE"}; Get-Item $OutputPath

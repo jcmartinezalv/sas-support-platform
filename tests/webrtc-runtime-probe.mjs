@@ -1,0 +1,15 @@
+import { createRequire } from "node:module";
+const require=createRequire(import.meta.url);
+const rtc=require("../client/webrtc-runtime/node_modules/node-datachannel");
+let caller,receiver,outbound,inbound,finished=false;
+const finish=(ok,message)=>{if(finished)return;finished=true;try{outbound?.close();inbound?.close();caller?.close();receiver?.close();rtc.cleanup();}catch{}process.stdout.write(message);setTimeout(()=>process.exit(ok?0:1),50);};
+caller=new rtc.PeerConnection("sas-test-caller",{iceServers:[],enableIceTcp:true,maxMessageSize:1024*1024,portRangeBegin:49152,portRangeEnd:49200});
+receiver=new rtc.PeerConnection("sas-test-receiver",{iceServers:[]});
+caller.onLocalDescription((sdp,type)=>receiver.setRemoteDescription(sdp,type));
+receiver.onLocalDescription((sdp,type)=>caller.setRemoteDescription(sdp,type));
+caller.onLocalCandidate((candidate,mid)=>receiver.addRemoteCandidate(candidate,mid));
+receiver.onLocalCandidate((candidate,mid)=>caller.addRemoteCandidate(candidate,mid));
+receiver.onDataChannel((channel)=>{inbound=channel;channel.onMessage((message)=>{const value=Buffer.isBuffer(message)?message.toString():String(message);if(value==="SAS-WEBRTC-OK")finish(true,"WEBRTC_LOCAL_OK");});});
+outbound=caller.createDataChannel("sas-screen");
+outbound.onOpen(()=>outbound.sendMessageBinary(Buffer.from("SAS-WEBRTC-OK")));
+setTimeout(()=>finish(false,"WEBRTC_LOCAL_TIMEOUT"),8000);

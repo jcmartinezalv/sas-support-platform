@@ -1,0 +1,28 @@
+{
+  "name": "sas-support-platform",
+  "version": "0.2.148",
+  "description": "Sistema de tickets por WhatsApp, soporte remoto y agente tecnico automatizado.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:server": "node src/server.js",
+    "start:client": "node client/agent-client.js",
+    "dev": "node src/server.js",
+    "check": "node --check src/server.js && node --check client/agent-client.js && node --check public/app.js && node --test tests/*.test.js",
+    "test": "node --test tests/*.test.js",
+    "audit:e2e": "node scripts/run-local-e2e-audit.mjs",
+    "simulate:fisher": "node scripts/run-offline-fisher-simulations.mjs",
+    "ops:report": "node scripts/export-production-operations.mjs",
+    "release:gate": "node scripts/export-release-gate.mjs",
+    "semaforo:produccion": "node scripts/export-release-gate.mjs",
+    "publish:update": "node scripts/publish-update-channel.mjs",
+    "publish:update:server": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-update-to-server.ps1",
+    "keys:update": "node scripts/generate-update-signing-key.mjs",
+    "audit:publication": "node scripts/test-publication-safety.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Restablecer contraseña SAS</title><link rel="stylesheet" href="/assets/styles.css"></head>
+<body class="client-install-page"><main class="client-install-shell"><section class="client-install-card">
+  <div class="brand consent-brand"><span class="brand-mark">S</span><div><strong>SAS</strong><small>Recuperación segura</small></div></div>
+  <h1>Restablecer contraseña</h1><p>Define una contraseña nueva de al menos 12 caracteres. La liga sólo funciona una vez y vence a los 15 minutos.</p>
+  <label for="password">Nueva contraseña</label><input id="password" type="password" minlength="12" autocomplete="new-password" placeholder="Mínimo 12 caracteres">
+  <label for="confirmPassword">Confirmar contraseña</label><input id="confirmPassword" type="password" minlength="12" autocomplete="new-password" placeholder="Repite la contraseña">
+  <button id="submitPassword" class="primary">Restablecer contraseña</button><p id="message" role="status" aria-live="polite"></p>
+</section></main>
+<script>
+const token=new URLSearchParams(location.search).get('token')||'';
+const button=document.querySelector('#submitPassword'),message=document.querySelector('#message');
+if(!token){button.disabled=true;message.textContent='Esta liga no es válida. Solicita una nueva liga a Fisher.';}
+button.onclick=async()=>{const password=document.querySelector('#password').value,confirmation=document.querySelector('#confirmPassword').value;if(password.length<12){message.textContent='La contraseña debe tener al menos 12 caracteres.';return;}if(password!==confirmation){message.textContent='Las contraseñas no coinciden.';return;}button.disabled=true;message.textContent='Restableciendo contraseña...';try{const response=await fetch('/api/mobile/v1/auth/recovery/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,password})});const data=await response.json().catch(()=>({}));message.textContent=data.message||data.error||'Solicitud procesada';if(!response.ok)button.disabled=false;}catch{message.textContent='No fue posible conectar con SAS. Intenta nuevamente.';button.disabled=false;}};
+</script></body></html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#183d35">
+  <title>Vincular SAS Cliente</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="client-install-page">
+  <main class="client-install-shell">
+    <section class="client-install-card smart-link-card">
+      <div class="brand consent-brand"><span class="brand-mark">S</span><div><strong>SAS Cliente</strong><small>Vinculación segura con soporte</small></div></div>
+      <h1>Conecta este equipo en un paso</h1>
+      <p class="client-install-lead">SAS detectará si el cliente ya está instalado. Esta vinculación identifica el equipo, pero no autoriza soporte remoto ni concede acceso a la pantalla.</p>
+      <div id="installLinkStatus" class="safety-banner">Comprobando la liga…</div>
+
+      <section class="smart-link-primary">
+        <span class="step-number">1</span>
+        <div><strong>¿Ya tienes SAS Cliente?</strong><small>Ábrelo para detectar y vincular este equipo automáticamente.</small></div>
+        <a id="openInstalledClient" class="primary-link disabled" aria-disabled="true">Detectar SAS Cliente</a>
+      </section>
+
+      <div class="smart-link-separator"><span>o</span></div>
+
+      <section class="smart-link-secondary">
+        <span class="step-number">2</span>
+        <div><strong>Instálalo si no está en el equipo</strong><small>El instalador recibirá el código temporal y terminará la vinculación.</small></div>
+        <a id="downloadClientInstaller" class="secondary-link disabled" aria-disabled="true">Descargar SAS Cliente</a>
+      </section>
+
+      <details class="installation-code">
+        <summary>Ver código corto temporal</summary>
+        <div><code id="installationCode">…</code><button id="copyInstallationCode" class="secondary" type="button">Copiar código</button></div>
+      </details>
+      <div class="click-help"><strong>Tu seguridad</strong><span>Cuando un técnico solicite acceso, SAS Cliente mostrará una notificación en este escritorio para Aceptar o Rechazar. La opción de teclado y ratón se autoriza por separado.</span></div>
+      <p id="installPageResult" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="/assets/client-install.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+node_modules/
+
+# Configuración y credenciales locales. Sólo se publica la plantilla.
+.env
+.env.*
+!.env.example
+agent-identity.json
+agent-credential.json
+unattended-policy.json
+
+# Datos operativos y material criptográfico.
+certs/
+data/
+logs/
+runtime/
+*.log
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+*.keystore
+
+# Instaladores, actualizaciones, descargas y resultados locales.
+dist/
+downloads/
+updates/
+output/
+tmp/
+updates-validation-*/
+install-manifest.json
+post-install-checklist.json
+*.exe
+*.msi
+*.msix
+*.zip
+*.7z
+*.apk
+*.aab
+*.dll
+*.cvd
+*.sig
+
+# Salidas de compilación.
+tools/**/bin/
+tools/**/obj/
+android-app/.gradle/
+android-app/.idea/
+android-app/local.properties
+android-app/**/build/
+*.obj
+*.pdb
+
+# Dependencias descargadas que conservan su distribución independiente.
+tools/win-acme/
+tools/clamav/*
+!tools/clamav/COPYING.txt
+!tools/clamav/source-manifest.json
+!tools/clamav/licenses/
+!tools/clamav/licenses/**
+tools/coturn/*
+!tools/coturn/LICENSE-COTURN.txt
+!tools/coturn/PROVENANCE.txt

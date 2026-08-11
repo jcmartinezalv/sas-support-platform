@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net6.0-windows</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AssemblyName>SasInputHelper</AssemblyName><RootNamespace>SasInputHelper</RootNamespace><Version>0.2.0</Version><Company>SAS Support Platform</Company><Product>SAS Input Helper</Product></PropertyGroup>
+</Project>

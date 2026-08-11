@@ -1,0 +1,154 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
+const agent = read("client", "agent-client.js");
+const helper = read("tools", "sas-input-helper", "Program.cs");
+const installer = read("scripts", "install-client.ps1");
+const updater = read("scripts", "apply-client-update.ps1");
+const cleanup = read("scripts", "stop-client-components.ps1");
+const nsis = read("installer", "windows11", "SAS-Cliente.nsi");
+const tray = read("scripts", "sas-client-tray.ps1");
+const workspace = read("public", "remote-workspace.html");
+
+test("mouse movement and normal click/keyboard prefer the interactive user path", () => {
+  assert.match(agent, /SAS_INPUT_HELPER_PIPE/);
+  assert.match(agent, /interactive_user_preferred/);
+  assert.doesNotMatch(agent, /system_service_fallback/);
+  assert.match(agent, /elevatedDesktopRequested/);
+  assert.match(agent, /stage, delivery, run/);
+  assert.match(agent, /delivery: "desktop_pipe"/);
+  assert.doesNotMatch(agent, /"service_session_bridge"/);
+  assert.match(agent, /all_input_paths_failed/);
+  assert.match(agent, /service_supervised_user_fallback/);
+  assert.match(agent, /executePrivilegedBrokerRaw\("INPUT_USER"/);
+  assert.match(agent, /requireInteractiveInputEvidence/);
+  assert.match(agent, /native_input_wrong_session/);
+  assert.doesNotMatch(agent, /interactive_process_fallback|one_shot_fallback/);
+  assert.match(workspace, /kind:'sas_pointer_move'/);
+  assert.match(helper, /private static void Move\(int x,int y\).*SetCursorPos\(x,y\)/);
+  assert.match(helper, /mouse_move_absolute_fallback/);
+  assert.match(helper, /MouseMove\|Absolute\|VirtualDesktop/);
+});
+
+test("click and keyboard attach WinSta0 and use measurable paced SendInput delivery in the user session", () => {
+  assert.match(helper, /OpenWindowStation\("WinSta0"/);
+  assert.match(helper, /SetProcessWindowStation/);
+  assert.match(helper, /stationAccess=.*WINSTA_WRITEATTRIBUTES/);
+  assert.match(helper, /IntPtr next=OpenInputDesktop/);
+  assert.match(helper, /method="SendInput"/);
+  assert.match(helper, /requested\+=expected/);
+  assert.match(helper, /sent\+=accepted/);
+  assert.match(helper, /Thread\.Sleep\(55\)/);
+  assert.match(helper, /input-v9-pointer-recovery/);
+  assert.match(helper, /setcursorpos_primary_sendinput_marked/);
+  assert.match(helper, /SasInputMarker=0x53415331/);
+  assert.match(helper, /uipi_target_higher_integrity/);
+  assert.match(helper, /GetForegroundWindow/);
+  assert.match(helper, /WindowFromPoint/);
+  assert.match(helper, /GetAncestor/);
+  assert.match(helper, /targetSource/);
+  assert.match(helper, /TokenIntegrityLevel/);
+  assert.match(helper, /INPUT\.Mouse\(down,0\)/);
+  assert.match(helper, /bool first=PressedButtons\.Add\(button\)/);
+  assert.doesNotMatch(helper, /if\(!PressedButtons\.Add\(button\)\)return/);
+  assert.match(helper, /inputs\.Add\(INPUT\.Mouse\(RightUp,0\)\)/);
+  assert.match(helper, /INPUT\.VirtualKey\(key,KeyFlags\(key,false\)\)/);
+  assert.doesNotMatch(helper, /mouse_event/);
+  assert.doesNotMatch(helper, /keybd_event/);
+  assert.match(helper, /SetKeys\(string\[\] keys,bool pressed,bool repeat=false\)/);
+  assert.match(helper, /repeat\?"key_repeat":"key_down"/);
+  assert.match(helper, /offset\+=32/);
+  assert.match(helper, /ReleaseAll\(\)/);
+  for (const marker of [/GetLastInputInfo/,/lastInputChanged/,/windowsIdentity/,/windowStation/,/threadDesktop/,/win32Error/,/processSessionId/,/activeConsoleSessionId/]) assert.match(helper, marker);
+  assert.match(agent, /retryInputThroughAuthorizedBroker/);
+  assert.match(agent, /authorized_integrity_escalation/);
+  assert.match(agent, /escalationReason: "uipi_target_higher_integrity"/);
+  assert.match(agent, /allowSecureDesktop: true/);
+  assert.match(agent, /threadDesktop === "winlogon"/);
+  assert.match(agent, /native_input_secure_desktop_requires_authorized_system_broker/);
+  assert.match(workspace, /ESCRITORIO SEGURO CONTROLADO/);
+});
+test("input helper exposes a user-scoped persistent named pipe", () => {
+  assert.match(helper, /--pipe-server/);
+  assert.match(helper, /RunPipeServer/);
+  assert.match(helper, /health_check/);
+  assert.match(helper, /NamedPipeServerStream/);
+  assert.match(helper, /WindowsIdentity\.GetCurrent\(\)\.User/);
+  assert.match(helper, /LocalSystemSid/);
+  assert.match(helper, /BuiltinAdministratorsSid/);
+  assert.doesNotMatch(helper, /AuthenticatedUserSid/);
+});
+
+test("installation registers elevated and interactive fallbacks without making SCM fatal", () => {
+  for (const source of [installer, updater, cleanup, nsis]) assert.match(source, /SAS Input Desktop Helper/);
+  assert.doesNotMatch(installer, /New-ScheduledTaskAction -Execute \$inputHelperPath/);
+  assert.match(installer, /Unregister-ScheduledTask -TaskName \$inputTaskName/);
+  assert.match(installer, /propietaria exclusiva del canal/);
+  assert.match(installer, /New-ScheduledTaskTrigger -AtLogOn/);
+  assert.match(installer, /New-ScheduledTaskPrincipal -GroupId "S-1-5-32-545" -RunLevel Limited/);
+  assert.match(installer, /RestartCount 999/);
+  assert.match(installer, /SAS Desktop Control Service/);
+  assert.match(installer, /\$desktopControlServiceCommand = \('"\{0\}"' -f \$secureAttentionBrokerPath\)/);
+  assert.match(installer, /Set-ServiceImagePath/);
+  assert.doesNotMatch(installer, /Invoke-ScCommand @\("config", \$brokerServiceName, "binPath="/);
+  assert.match(installer, /Set-ServiceImagePath -Name \$brokerServiceName -CommandLine \$desktopControlServiceCommand/);
+  assert.match(installer, /registrar servicio nativo de control remoto"\s+try \{[\s\S]*Set-ServiceImagePath[\s\S]*\} catch \{/);
+  assert.match(installer, /try \{\s*\$brokerDiagnosticPath = Write-DesktopControlDiagnostic/);
+  assert.match(installer, /try \{ Invoke-ScCommand @\("config", \$brokerServiceName, "start=", "disabled"\) \} catch/);
+  assert.match(installer, /Invoke-ScCommand @\("config", \$brokerServiceName, "DisplayName=", "SAS Desktop Control Service", "obj=", "LocalSystem", "start=", "delayed-auto"\)/);
+  assert.match(installer, /identidad no autorizada/);
+  assert.match(installer, /if \(\$restoreMode -eq "service"\)/);
+  assert.match(installer, /Start-ScheduledTask -TaskName \$brokerFallbackTaskName/);
+  assert.doesNotMatch(installer, /throw "SAS Desktop Control Service no pudo iniciar ni repararse/);
+  assert.match(installer, /\$brokerStartupMode = "system_task_fallback"/);
+  assert.match(installer, /\$brokerStartupMode = "unavailable"/);
+  assert.match(installer, /Write-DesktopControlDiagnostic/);
+  assert.match(nsis, /sas-service-host\\SasServiceHost\.exe/);
+  assert.match(installer, /SAS_INPUT_HELPER_PIPE=\\\\\.\\pipe\\SASInputDesktopV3/);
+  assert.match(installer, /input_delivery_no_spawn/);
+  assert.match(installer, /Read-PipeLineWithTimeout/);
+  assert.match(installer, /ReadLineAsync\(\)/);
+  assert.match(installer, /ERROR invalid_request/);
+  assert.match(updater, /Test-PrivilegedBrokerPipe/);
+  assert.match(updater, /Test-InputDesktopPipe/);
+});
+
+test("native ACL repair keeps executable rights on files instead of folder-only inheritance flags", () => {
+  assert.match(installer, /function Set-NativeRuntimeAcl/);
+  assert.doesNotMatch(installer, /\$protectedPath \/inheritance:r[\s\S]{0,180}\/T \/C \/Q/);
+  assert.match(installer, /function Invoke-NativeProcessCaptured/);
+  assert.match(installer, /RedirectStandardError = \$true/);
+  assert.match(installer, /function Remove-LegacyNativeVersions/);
+  assert.ok(
+    installer.indexOf('Invoke-IcaclsChecked @($CurrentDirectory') < installer.indexOf('Remove-LegacyNativeVersions -Root $Root'),
+    "the current native runtime must be repaired before legacy cleanup"
+  );
+  assert.match(installer, /legacy_native_cleanup/);  assert.match(installer, /'\*S-1-5-32-545:RX'/);
+  assert.match(installer, /No se pudo habilitar la ejecución de \$executable/);
+  assert.match(installer, /native_runtime_acl/);
+});
+test("the tray owns and repairs the normal-user interactive helper when the service is absent", () => {
+  assert.match(tray, /Ensure-InputDesktopHelper/);
+  assert.match(tray, /if \(Test-InputDesktopPipe -ExpectedHelperPath \$helperPath\)/);
+  assert.match(tray, /\$inputPipeName = "SASInputDesktopV3_S\$interactiveSessionId"/);
+  assert.match(tray, /Start-Process -FilePath \$helperPath -ArgumentList @\("--pipe-server", \$inputPipeName\)/);
+  assert.match(tray, /\$script:inputHelperProcess/);
+  assert.match(tray, /\$script:lastInputHelperAttempt/);
+  assert.match(tray, /Canal interactivo/);
+  assert.match(tray, /input-desktop-status\.json/);
+  assert.match(agent, /readInputDesktopRuntimeStatus/);
+  assert.match(agent, /inputHelperReady/);
+  assert.match(agent, /interactive_desktop_pipe/);
+  assert.match(agent, /desktop_pipe/);
+  assert.match(agent, /resolveInputHelperPipePath/);
+  assert.match(agent, /activeSessionId/);
+  assert.match(installer, /SAS_INPUT_HELPER_STATUS_FILE=\$InstallPath\\runtime\\input-desktop-status\.json/);
+  assert.match(tray, /sharedInputDesktopStatusPath/);
+  assert.match(agent, /SASInputDesktopV3_S\\d\+/);
+  assert.match(workspace, /inputHelperReady===false/);
+});

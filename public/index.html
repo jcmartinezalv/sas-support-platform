@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b202b">
+  <title>SAS - Centro de soporte</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="console-locked">
+  <section id="consoleLogin" class="console-login" aria-labelledby="consoleLoginTitle">
+    <div class="login-card">
+      <div class="login-brand"><span class="brand-mark">S</span><div><strong>SAS</strong><small>Centro de soporte</small></div></div>
+      <div class="login-heading"><span class="eyebrow">Acceso seguro</span><h1 id="consoleLoginTitle">Iniciar sesión</h1><p>Usa la misma cuenta autorizada de la aplicación móvil.</p></div>
+      <form id="consoleLoginForm" class="login-form">
+        <label for="consoleUsername">Usuario</label><input id="consoleUsername" name="username" autocomplete="username" required autofocus>
+        <label for="consolePassword">Contraseña</label><div class="password-control"><input id="consolePassword" name="password" type="password" autocomplete="current-password" required><button id="toggleConsolePassword" class="secondary" type="button">Ver</button></div>
+        <button id="consoleLoginButton" type="submit">Entrar a SAS</button>
+      </form>
+      <form id="consolePasswordChangeForm" class="login-form" hidden>
+        <h2>Cambia tu contraseña temporal</h2><p>Por seguridad debe tener al menos 12 caracteres.</p>
+        <label for="currentConsolePassword">Contraseña actual</label><input id="currentConsolePassword" type="password" autocomplete="current-password" required>
+        <label for="newConsolePassword">Nueva contraseña</label><input id="newConsolePassword" type="password" autocomplete="new-password" minlength="12" required>
+        <label for="confirmConsolePassword">Confirmar nueva contraseña</label><input id="confirmConsolePassword" type="password" autocomplete="new-password" minlength="12" required>
+        <button type="submit">Actualizar contraseña</button>
+      </form>
+      <p id="consoleLoginResult" class="login-result" role="status" aria-live="polite"></p>
+      <aside id="consoleLoginSafety" class="login-safety" hidden>
+        <strong>Si hab&iacute;a soporte remoto activo</strong>
+        <p>Vuelve a iniciar sesi&oacute;n y term&iacute;nalo desde Soporte remoto. El usuario tambi&eacute;n puede detenerlo inmediatamente desde el panel SAS de su equipo.</p>
+      </aside>
+      <p class="login-tab-note">Tu sesión se conserva y se sincroniza entre pestañas. Si hay un corte de red, SAS reintenta la conexión sin cerrar tu trabajo.</p>
+      <details class="recovery-access"><summary>Acceso de recuperación local</summary><p>Úsalo solamente si las cuentas no están disponibles. Requiere el token maestro del servidor.</p><label for="recoveryToken">Token maestro</label><div class="password-control"><input id="recoveryToken" type="password" autocomplete="off"><button id="useRecoveryToken" class="secondary" type="button">Recuperar acceso</button></div></details>
+    </div>
+  </section>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">S</span>
+      <div>
+        <strong>SAS</strong>
+        <small>Centro de soporte</small>
+      </div>
+    </div>
+    <nav aria-label="Secciones principales">
+      <button class="nav-button active" data-view="tickets" data-label="Tickets" data-icon="●"><span aria-hidden="true">●</span> Tickets</button>
+      <button class="nav-button" data-view="remote" data-label="Remoto" data-icon="↗"><span aria-hidden="true">↗</span> Remoto</button>
+      <button class="nav-button" data-view="agents" data-label="Equipos" data-icon="▣"><span aria-hidden="true">▣</span> Equipos</button>
+      <button class="nav-button" data-view="knowledge" data-label="Soluciones" data-icon="◇"><span aria-hidden="true">◇</span> Soluciones</button>
+      <button class="nav-button" data-view="reports" data-label="Reportes" data-icon="▥"><span aria-hidden="true">▥</span> Reportes</button>
+      <button class="nav-button" data-view="mobile-users" data-label="Accesos" data-icon="♙"><span aria-hidden="true">♙</span> Accesos</button>
+      <button class="nav-button" data-view="audit" data-label="Estado" data-icon="◉"><span aria-hidden="true">◉</span> Estado</button>
+    </nav>
+    <div class="sidebar-footer" aria-label="Herramientas operativas">
+      <span class="sidebar-footer-label">Herramientas</span>
+      <button class="nav-button" data-view="contacts" data-label="Agenda" data-icon="⌕"><span aria-hidden="true">⌕</span> Agenda</button>
+      <button class="nav-button" data-view="tests" data-label="Operación" data-icon="⚙"><span aria-hidden="true">⚙</span> Operación</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div>
+        <h1>SAS Soporte</h1>
+        <p>Tickets, WhatsApp, Fisher y soporte remoto seguro.</p><div id="topbarSignal" class="topbar-signal"></div>
+      </div>
+      <div id="consoleSession" class="console-session" hidden>
+        <span class="session-avatar" id="consoleSessionAvatar">U</span>
+        <div><strong id="consoleSessionName">Usuario</strong><small id="consoleSessionRole">Perfil</small><small id="consoleSessionState" class="session-continuity">Sesión protegida</small></div>
+        <button id="consoleLogout" class="secondary" type="button">Salir</button>
+      </div>
+    </header>
+
+    <section class="notice" id="notice" role="status" aria-live="polite" hidden></section>
+    <section class="alert-center" id="alertCenter" aria-live="polite"></section>
+    <section class="ops-strip" id="opsStrip"></section>
+    <section class="metrics" id="metrics"></section>
+    <section class="view active" id="view-tickets">
+      <div class="section-header"><div><h2>Tickets de soporte</h2><p>Entrada principal para WhatsApp, Fisher y seguimiento.</p></div><button id="createDemoTicket">Nuevo ticket</button></div><div id="ticketsSummary" class="view-summary"></div>
+      <div class="grid two">
+        <div class="panel">
+          <h3>Tickets</h3>
+          <div class="ticket-table-toolbar" aria-label="Filtros de tickets">
+            <input id="ticketSearch" type="search" placeholder="Buscar ticket, cliente, equipo o WhatsApp">
+            <select id="ticketStatusFilter"><option value="active">Activos</option><option value="all">Todos</option><option value="open">Abiertos</option><option value="in_progress">En progreso</option><option value="waiting_customer">Esperando cliente</option><option value="resolved">Resueltos</option><option value="closed">Cerrados</option><option value="whatsapp">Con WhatsApp</option></select>
+            <select id="ticketGroupBy"><option value="date">Agrupar por fecha</option><option value="equipment">Agrupar por equipo</option><option value="whatsapp">Agrupar por WhatsApp</option><option value="status">Agrupar por estado</option><option value="none">Sin agrupar</option></select>
+          </div>
+          <div id="ticketsList" class="ticket-table"></div>
+        </div>
+        <div class="panel fisher-workbench">
+          <div class="fisher-heading">
+            <span class="fisher-avatar" aria-hidden="true">F</span>
+            <div><h3>Fisher</h3><p>Asistente de diagnóstico y resolución supervisada</p></div>
+            <span class="fisher-presence"><i aria-hidden="true"></i>Disponible</span>
+          </div>
+          <label class="fisher-prompt" for="diagnoseText"><span>¿Qué está ocurriendo?</span><small>Describe síntomas, mensajes de error y cambios recientes.</small></label>
+          <textarea id="diagnoseText" placeholder="Ejemplo: Outlook no abre desde esta mañana y muestra el error 0x..."></textarea>
+          <div class="fisher-primary-action"><button id="runDiagnosis" title="Fisher revisa el ticket y propone el siguiente paso">Pedir ayuda a Fisher <span aria-hidden="true">→</span></button><small>La propuesta requiere revisión antes de aplicarse.</small></div>
+          <div id="diagnosisResult" class="diagnosis-result" aria-live="polite"></div>
+          <details class="action-menu full-width whatsapp-simulator technical-details">
+            <summary>Simulador opcional de WhatsApp</summary>
+            <div class="whatsapp-form">
+              <input id="whatsappFrom" value="5215559002000" aria-label="Teléfono de WhatsApp">
+              <textarea id="whatsappMessage" placeholder="Mensaje del cliente por WhatsApp...">Necesito soporte remoto, no abre Outlook</textarea>
+              <button id="simulateWhatsapp">Simular mensaje</button>
+            </div>
+            <div id="whatsappResult" class="whatsapp-result"></div>
+          </details>
+        </div>
+      </div>
+      <dialog id="ticketDialog" class="case-dialog" aria-labelledby="ticketDialogTitle">
+        <div class="case-dialog-shell">
+          <header class="case-dialog-header"><div><small>Centro de atención</small><h2 id="ticketDialogTitle">Detalle del ticket</h2></div><button id="closeTicketDialog" class="secondary" type="button" aria-label="Cerrar detalle del ticket">Cerrar</button></header>
+          <div id="ticketDetail" class="ticket-detail"></div>
+        </div>
+      </dialog>
+    </section>
+
+    <section class="view" id="view-remote">
+      <div class="section-header"><div><h2>Soporte remoto</h2><p>Selecciona un ticket para abrir inmediatamente su espacio de soporte.</p></div></div><div id="remoteSummary" class="view-summary"></div>
+      <div id="remoteList" class="remote-ticket-grid" aria-label="Tickets de soporte remoto"></div>
+    </section>
+    <section class="view" id="view-tests">
+      <div class="section-header"><div><h2>Centro de operación</h2><p>Estado del sistema, acciones recomendadas y validaciones operativas.</p></div></div><div id="testsSummary" class="view-summary"></div>
+      <div class="grid two">
+        <div class="panel priority-panel">
+          <h3>Acciones recomendadas</h3>
+          <div id="testGuide" class="guided-step"></div>
+          <div id="testActions" class="item-actions guided-actions"></div>
+        </div>
+        <div class="panel">
+          <h3>Avance operativo</h3>
+          <div id="guidedReport" class="guided-report"></div>
+        </div>
+        <div class="panel">
+          <h3>Estado del flujo</h3>
+          <div id="testStatus" class="test-status"></div>
+        </div>
+        <div class="panel technical-panel">
+          <details class="action-menu full-width">
+            <summary>Opciones técnicas de control</summary>
+            <div id="realInputLab" class="real-input-lab"></div>
+          </details>
+        </div>
+        <div class="panel">
+          <h3>Checklist operativo</h3>
+          <div id="testChecklist" class="checklist"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-agents">
+      <div class="section-header"><div><h2>Equipos</h2><p>Computadoras vinculadas y listas para recibir soporte.</p></div></div><div id="agentsSummary" class="view-summary"></div>
+      <details class="action-menu deployment-manager">
+        <summary>Instalación masiva y opciones avanzadas</summary>
+        <div class="deployment-grid">
+          <label>Nombre de campaña<input id="deploymentName" placeholder="Sucursal norte · Julio"></label>
+          <label>Empresa o ubicación<input id="deploymentCompany" placeholder="Empresa"></label>
+          <label>Límite de equipos<input id="deploymentLimit" type="number" min="1" max="10000" value="100"></label>
+          <label>Válida hasta<input id="deploymentExpires" type="date"></label>
+          <button id="createDeploymentCampaign" type="button">Crear y descargar .sasdeploy</button>
+        </div>
+        <p class="muted">Instalación silenciosa: <code>SAS-Cliente-Setup.exe /S /DEPLOYMENTFILE="empresa.sasdeploy"</code>. Cada computadora recibe su propia credencial y queda pendiente de asociar a una persona.</p>
+        <small id="deploymentResult" role="status" aria-live="polite"></small>
+        <div id="deploymentCampaigns" class="list compact-list"></div>
+      </details>
+      <div id="agentsList" class="list"></div>
+    </section>
+
+    <section class="view" id="view-knowledge">
+      <div class="section-header"><div><h2>Soluciones</h2><p>Conocimiento revisable para que Fisher resuelva mejor.</p></div></div><div id="knowledgeSummary" class="view-summary"></div>
+      <div id="knowledgeList" class="list"></div>
+    </section>
+
+    <section class="view" id="view-mobile-users">
+      <div class="section-header"><div><h2>Usuarios y accesos</h2><p>Cuentas autorizadas para escritorio, móvil y WhatsApp.</p></div><button id="refreshMobileUsers" class="secondary">Actualizar</button></div>
+      <div class="grid two">
+        <div class="panel">
+          <h3>Nuevo acceso</h3>
+          <div class="mobile-user-form">
+            <label>Usuario<input id="mobileUsername" autocomplete="off" minlength="3"></label>
+            <label>Nombre visible<input id="mobileDisplayName" autocomplete="off"></label><label>WhatsApp E.164<input id="mobilePhone" placeholder="+5255..." inputmode="tel" autocomplete="tel"></label>
+            <label>Rol<select id="mobileRole"><option value="viewer">Consulta</option><option value="technician">Técnico</option><option value="supervisor">Supervisor</option><option value="admin">Administrador</option></select></label>
+            <label>Contraseña temporal<input id="mobilePassword" type="password" autocomplete="new-password" minlength="12"></label>
+            <small>Debe tener al menos 12 caracteres. Se recomienda entregarla por un canal seguro.</small>
+            <button id="createMobileUser" type="button">Crear acceso</button>
+            <small id="mobileCreateResult" class="visible-log" role="status" aria-live="polite" hidden></small>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title-row"><h3>Usuarios</h3><span id="mobileUsersCount" class="status-pill"></span></div>
+          <div id="mobileUsersList" class="list"></div>
+        </div>
+      </div>
+    </section>
+    <section class="view" id="view-reports">
+      <div class="section-header report-heading"><div><span class="eyebrow">Decisiones con datos</span><h2>Reportes y Dashboard</h2><p>Volumen, tiempos de atención, carga de trabajo y calidad del soporte.</p></div><div class="item-actions"><button id="refreshReports" class="secondary" type="button">Actualizar</button><button id="exportTicketReport" type="button">Exportar CSV</button></div></div>
+      <div class="panel report-filter-panel">
+        <div class="report-period-presets" aria-label="Periodos rápidos"><button type="button" class="secondary" data-report-days="7">7 días</button><button type="button" class="secondary active" data-report-days="30">30 días</button><button type="button" class="secondary" data-report-days="90">90 días</button></div>
+        <div class="report-filters">
+          <label>Desde<input id="reportFrom" type="date"></label>
+          <label>Hasta<input id="reportTo" type="date"></label>
+          <label>Estado<select id="reportStatus"><option value="all">Todos</option><option value="open">Abiertos</option><option value="in_progress">En progreso</option><option value="waiting_customer">Esperando cliente</option><option value="resolved">Resueltos</option><option value="closed">Cerrados</option></select></label>
+          <label>Prioridad<select id="reportPriority"><option value="all">Todas</option><option value="urgent">Urgente</option><option value="high">Alta</option><option value="normal">Normal</option><option value="low">Baja</option></select></label>
+          <label>Canal<select id="reportSource"><option value="all">Todos los canales</option></select></label>
+          <label>Equipo<select id="reportEquipment"><option value="all">Todos los equipos</option></select></label>
+          <label>Técnico<select id="reportTechnician"><option value="all">Todos los técnicos</option></select></label>
+          <button id="applyReportFilters" type="button">Aplicar filtros</button>
+        </div>
+        <div id="reportFreshness" class="report-freshness" role="status"></div>
+      </div>
+      <div id="reportSummary" class="report-kpis" aria-label="Indicadores principales"></div>
+      <div id="reportCoverage" class="report-coverage"></div>
+      <div class="report-dashboard-grid">
+        <article class="panel report-chart report-chart-wide"><header><div><h3>Tickets creados y cerrados</h3><p>Evolución diaria del periodo seleccionado.</p></div><span class="report-legend"><i class="created"></i>Creados <i class="closed"></i>Cerrados</span></header><div id="reportTrend" class="trend-chart"></div></article>
+        <article class="panel report-chart"><header><div><h3>Estado actual</h3><p>Situación de los tickets creados en el periodo.</p></div></header><div id="reportStatusChart" class="bar-chart"></div></article>
+        <article class="panel report-chart"><header><div><h3>Prioridad</h3><p>Distribución de atención requerida.</p></div></header><div id="reportPriorityChart" class="bar-chart"></div></article>
+        <article class="panel report-chart"><header><div><h3>Canales de entrada</h3><p>Origen de las solicitudes.</p></div></header><div id="reportSourceChart" class="bar-chart"></div></article>
+        <article class="panel report-chart"><header><div><h3>Carga por equipo</h3><p>Equipos con más tickets en el periodo.</p></div></header><div id="reportEquipmentChart" class="bar-chart"></div></article>
+      </div>
+      <div class="grid two report-lower-grid">
+        <article class="panel"><div class="panel-title-row"><div><h3>Backlog y antigüedad</h3><p>Tickets que todavía requieren cierre documentado.</p></div><span id="reportBacklogCount" class="status-pill"></span></div><div id="reportAgeBuckets" class="age-buckets"></div><div id="reportOldestTickets" class="report-table-wrap"></div></article>
+        <article class="panel"><h3>Soporte remoto y Fisher</h3><p>Uso de sesiones, control y observación asistida.</p><div id="reportRemoteMetrics" class="report-mini-metrics"></div><hr><h3>Productividad por técnico</h3><div id="reportTechnicianChart" class="bar-chart"></div></article>
+      </div>
+      <details class="panel report-details-panel"><summary><span><strong>Detalle de tickets del reporte</strong><small>Hasta 500 registros; WhatsApp se muestra protegido.</small></span></summary><div id="reportTicketDetails" class="report-table-wrap"></div></details>
+    </section>
+    <section class="view" id="view-contacts">
+      <div class="section-header"><div><h2>Agenda de clientes</h2><p>Relaciona cada persona con la razón social correcta y abre rápidamente sus medios de contacto.</p></div><button id="refreshContacts" class="secondary">Actualizar</button></div>
+      <div id="contactsSummary" class="view-summary"></div>
+      <details class="panel aspel-import-panel">
+        <summary><span><strong>Importar empresas desde Aspel SAE</strong><small>Consulta de sólo lectura sobre Firebird; SAS no modifica la base de SAE.</small></span><span class="status-pill">Aspel SAE</span></summary>
+        <div class="aspel-import-grid">
+          <label>Base de datos en SERVER<input id="aspelDatabasePath" placeholder="C:\...\SAE90EMPRE01.FDB" autocomplete="off"></label>
+          <label>Usuario Firebird<input id="aspelUsername" value="SYSDBA" autocomplete="username"></label>
+          <label>Contraseña Firebird<input id="aspelPassword" type="password" autocomplete="current-password"></label>
+          <details class="inline-details"><summary>Ruta avanzada de isql.exe</summary><label>Ejecutable Firebird<input id="aspelIsqlPath" placeholder="Detección automática" autocomplete="off"></label></details>
+        </div>
+        <div class="item-actions"><button id="previewAspelClients" class="secondary" type="button">Revisar conexión</button><button id="importAspelClients" type="button">Importar o actualizar empresas</button></div>
+        <div id="aspelImportResult" class="aspel-import-result" role="status" aria-live="polite"></div>
+      </details>
+      <div class="grid two agenda-work-grid">
+        <div class="panel"><h3>Nueva ficha</h3><label>Nombre<input id="contactName" autocomplete="name"></label><label>Empresa<input id="contactCompany" list="companyCatalogList" autocomplete="organization"></label><label>Teléfono / WhatsApp<input id="contactPhone" inputmode="tel" autocomplete="tel"></label><label>Correo<input id="contactEmail" type="email" autocomplete="email"></label><label>Dirección<input id="contactAddress" autocomplete="street-address"></label><label>Notas<textarea id="contactNotes"></textarea></label><button id="createContact" type="button">Guardar ficha</button><small id="contactResult" role="status"></small></div>
+        <div class="panel company-assignment-panel"><h3>Asignar empresa</h3><p class="muted">Busca una persona y selecciona la razón social importada desde Aspel SAE.</p><label>Persona<input id="companyContactPicker" list="contactCatalogList" placeholder="Nombre, teléfono o correo" autocomplete="off"></label><label>Razón social<input id="companyPicker" list="companyCatalogList" placeholder="Escribe para buscar" autocomplete="off"></label><button id="assignContactCompany" type="button">Asignar empresa</button><small id="companyAssignmentResult" role="status"></small><hr><h3>Empresas disponibles</h3><input id="companySearch" type="search" placeholder="Razón social, RFC o clave SAE" autocomplete="off"><div id="companiesList" class="list compact-company-list"></div></div>
+      </div>
+      <datalist id="companyCatalogList"></datalist><datalist id="contactCatalogList"></datalist>
+      <div class="panel"><h3>Búsqueda rápida</h3><input id="contactSearch" placeholder="Nombre, empresa, teléfono o correo..." autocomplete="off"><div id="contactsList" class="list"></div></div>
+    </section>    <section class="view" id="view-audit">
+      <div class="section-header"><div><h2>Estado del sistema</h2><p>Salud general, seguridad, instalación y actividad reciente.</p></div></div><div id="auditSummary" class="view-summary"></div>
+      <div class="grid two audit-grid">
+        <div class="panel">
+          <h3>Resumen</h3>
+          <div id="systemStatus" class="system-status"></div>
+          <div id="updateStatus" class="installation-status"></div>
+          <div id="releaseGate" class="release-gate-panel"></div>
+          <div id="productionReadiness" class="readiness-panel"></div>
+          <div id="productionOperations" class="installation-status"></div>
+          <div id="installationStatus" class="installation-status"></div>
+          <div id="repairOutcomes" class="installation-status"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title-row"><h3>Actividad reciente</h3><div class="item-actions compact-actions"><select id="auditFilter" aria-label="Filtrar actividad"><option value="all">Toda</option><option value="security">Seguridad</option><option value="remote">Soporte remoto</option><option value="tickets">Tickets</option></select><details class="inline-details"><summary>Exportar</summary><div><button class="secondary" id="exportAuditCsv">Hoja CSV</button><button class="secondary" id="exportAuditJson">Datos JSON</button></div></details></div></div>
+          <div id="auditList" class="list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="updateConfirmDialog" class="confirmation-dialog" aria-labelledby="updateConfirmTitle">
+    <form id="updateConfirmForm" class="confirmation-dialog-shell">
+      <span class="eyebrow">Actualización protegida</span>
+      <h2 id="updateConfirmTitle">Instalar y reiniciar SAS</h2>
+      <p>Se creará un respaldo antes de reemplazar la versión actual. Para confirmar, escribe exactamente:</p>
+      <code id="updateConfirmPhrase">ACTUALIZAR</code>
+      <label for="updateConfirmInput">Frase de confirmación</label>
+      <input id="updateConfirmInput" autocomplete="off" spellcheck="false">
+      <p id="updateConfirmError" class="confirmation-error" role="status" aria-live="polite"></p>
+      <div class="item-actions">
+        <button id="cancelUpdateConfirm" class="secondary" type="button">Cancelar</button>
+        <button id="acceptUpdateConfirm" type="submit" disabled>Instalar y reiniciar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

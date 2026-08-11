@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b202b">
+  <title>Tu seguridad durante el soporte - SAS</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="consent-page">
+  <main class="consent-shell">
+    <section class="consent-card safety-card">
+      <div class="brand consent-brand">
+        <span class="brand-mark">S</span>
+        <div>
+          <strong>SAS Soporte Remoto</strong>
+          <small>Estado, permisos y finalización</small>
+        </div>
+      </div>
+
+      <div class="safety-header">
+        <div>
+          <h1>Tu sesión de soporte</h1>
+          <p id="consentStatus">Comprobando la solicitud…</p>
+        </div>
+        <div class="consent-code" id="joinCode">------</div>
+      </div>
+
+      <div class="safety-banner" id="safetyBanner" role="status" aria-live="polite">Comprobando el estado de seguridad…</div>
+
+      <div class="current-capability safe" id="currentCapability"><strong>Sin acceso activo</strong><span>El técnico no puede ver ni controlar este equipo.</span></div>
+
+      <div class="customer-next-step" id="customerNextStep">
+        <div><small>Que debes hacer ahora</small><strong id="customerNextTitle">Espera mientras comprobamos la solicitud</strong><span id="customerNextDetail">No pulses ningun permiso hasta ver el estado de la sesion.</span></div>
+        <button id="showCustomerAction" class="secondary" type="button" hidden>Mostrar boton</button>
+      </div>
+
+      <div class="safety-grid">
+        <article class="safety-state" id="generalConsentState">
+          <strong>Soporte remoto</strong>
+          <span>Pendiente</span>
+        </article>
+        <article class="safety-state" id="sessionState">
+          <strong>Sesión</strong>
+          <span>Pendiente</span>
+        </article>
+        <article class="safety-state" id="screenState">
+          <strong>Vista en vivo</strong>
+          <span>Detenida</span>
+        </article>
+        <article class="safety-state" id="controlState">
+          <strong>Teclado y mouse</strong>
+          <span>Bloqueados</span>
+        </article>
+      </div>
+
+      <div class="consent-copy"><strong>Antes de autorizar</strong><p>Continúa solo si solicitaste ayuda y reconoces al técnico. Una autorización habilita todas las herramientas necesarias para este ticket; puedes finalizar y revocar todo en cualquier momento.</p></div>
+
+      <div class="consent-actions">
+        <button id="approveConsent">Autorizar soporte</button>
+        <button id="rejectConsent" class="secondary danger">Rechazar soporte</button>
+        <button id="approveControl" class="secondary" hidden>Permitir teclado y mouse</button>
+        <button id="rejectControl" class="secondary danger" hidden>Mantenerlos bloqueados</button>
+      </div>
+
+      <button id="closeSession" class="panic-button">Finalizar sesión ahora</button>
+
+      <div class="safety-log" role="status" aria-live="polite">
+        <strong>Información para ti</strong>
+        <p id="consentResult" class="visible-log info">Revisa los permisos y el estado antes de continuar.</p>
+        <details class="technical-details"><summary>Información técnica</summary><small id="consentTechnical">Comprobación pendiente</small></details>
+      </div>
+    </section>
+  </main>
+  <script src="/assets/remote-consent.js"></script>
+</body>
+</html>

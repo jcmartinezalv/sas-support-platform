@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>SasCaptureHelper</AssemblyName>
+    <RootNamespace>SasCaptureHelper</RootNamespace>
+    <Version>0.1.0</Version>
+    <Authors>SAS Support Platform</Authors>
+    <Company>SAS Support Platform</Company>
+    <Product>SAS Capture Helper</Product>
+    <Description>Authorized desktop frame capture helper for SAS Support Platform.</Description>
+  </PropertyGroup>
+</Project>

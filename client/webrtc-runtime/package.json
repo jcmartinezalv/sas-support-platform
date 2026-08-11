@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "node-datachannel": "^0.32.3"
+  },
+  "allowScripts": {
+    "node-datachannel@0.32.3": true
+  }
+}
